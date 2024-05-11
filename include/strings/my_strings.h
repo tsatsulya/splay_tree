@@ -1,5 +1,6 @@
 #include <string>
-namespace string_mul {
+
+namespace my_strings {
 
 std::string operator*(std::string const &in, size_t m) {
     std::string res;
