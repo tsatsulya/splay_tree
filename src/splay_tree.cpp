@@ -61,5 +61,29 @@ status splay_tree<tag_t, value_t>::left_rotate(tag_t tag) {
 
 template<typename tag_t, typename value_t>
 status splay_tree<tag_t, value_t>::splay(tag_t tag) {
-    // return rotate(tag, sides::left);
+    node *picked_node = nodes[tag];
+
+    node *parent = picked_node->parent;
+    if (!parent) return status::OK;
+
+    sides parent_side = get_node_side(picked_node);
+
+    node *grparent = nodes[tag]->parent->parent;
+
+    if (!grparent)
+        if (parent_side == sides::left)
+            return right_rotate(parent->tag);
+        else
+            return left_rotate(parent->tag);
+
+    sides grparent_side = get_node_side(parent);
+
+    if (grparent_side = sides::left && parent_side == sides::right)
+        return zag_zig(tag);
+    if (grparent_side = sides::right && parent_side == sides::left)
+        return zag_zig(tag);
+    if (grparent_side = sides::right && parent_side == sides::right)
+        return zag_zag(tag);
+    if (grparent_side = sides::left && parent_side == sides::left)
+        return zig_zig(tag);
 }

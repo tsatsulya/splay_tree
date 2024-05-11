@@ -7,7 +7,7 @@ namespace splay_ {
 enum status {OK = 0,
              WARN = 1};
 
-enum sides { left, right };
+enum sides { left, right, no };
 
 template<typename tag_t, typename value_t>
 class splay_tree {
@@ -77,7 +77,16 @@ private:
         else return root->right;
     };
 
+    sides get_node_side(node picked_node) {
+        if (picked_node->left && picked_node->left == picked_node)
+            return sides::left;
+        if (picked_node->right && picked_node->right == picked_node)
+            return sides::right;
+        return sides::no;
+    }
+
     status tie_node(node*, node*, sides);
+
     status splay(tag_t);
 };
 }
