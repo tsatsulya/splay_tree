@@ -7,17 +7,17 @@ namespace splay_ {
 enum status {OK = 0,
              WARN = 1};
 
-enum sides { left = 'left', right = 'right' };
+enum sides { left, right };
 
 template<typename tag_t, typename value_t>
 class splay_tree {
-    status rotate(tag_t, sides);
-    status right_rotate(tag_t);
-    status left_rotate(tag_t);
+public:
 
-    status zig_zag(tag_t);
-    status zag_zig(tag_t);
-    status zig(tag_t);
+    splay_tree();
+    value_t search(tag_t);
+    status insert(tag_t, value_t);
+    status remove(tag_t);
+    status print();
 
     struct node {
         tag_t tag;
@@ -28,6 +28,48 @@ class splay_tree {
             this->tag = tag_;
         }
     };
+    node *create_node(tag_t tag) {
+        return new node(tag);
+    }
+private:
+
+    std::unordered_map<tag_t, node*> nodes;
+    int depth;
+    int get_depth();
+    status rotate(tag_t, sides);
+    status right_rotate(tag_t);
+    status left_rotate(tag_t);
+
+    status zig_zag(tag_t tag) {
+        tag_t parent_tag =  nodes[tag]->parent->tag;
+        status st = right_rotate(parent_tag);
+        if (st) return st;
+        return left_rotate(parent_tag);
+    };
+
+    status zag_zig(tag_t tag) {
+        tag_t parent_tag =  nodes[tag]->parent->tag;
+        status st = left_rotate(parent_tag);
+        if (st) return st;
+        return right_rotate(parent_tag);
+    }
+
+    status zig_zig(tag_t tag) {
+        tag_t parent_tag =  nodes[tag]->parent->tag;
+        tag_t grparent_tag = nodes[tag]->parent->parent->tag;
+        status st = right_rotate(grparent_tag);
+        if (st) return st;
+        return right_rotate(parent_tag);
+    }
+
+    status zag_zag(tag_t tag) {
+        tag_t parent_tag =  nodes[tag]->parent->tag;
+        tag_t grparent_tag = nodes[tag]->parent->parent->tag;
+        status st = left_rotate(grparent_tag);
+        if (st) return st;
+        return left_rotate(parent_tag);
+    };
+
     node *root;
 
     node *get_sub_node(node* root, sides side) {
@@ -36,16 +78,6 @@ class splay_tree {
     };
 
     status tie_node(node*, node*, sides);
-
-    std::unordered_map<tag_t, node*> nodes;
-    int depth;
-
-public:
-    splay_tree();
-    value_t search(tag_t);
-    status insert(tag_t, value_t);
-    status remove(tag_t);
-    status print();
-    int get_depth();
+    status splay(tag_t);
 };
 }

@@ -1,17 +1,31 @@
+cmake_minimum_required(VERSION 3.27)
 
-cmake_minimum_required(VERSION 3.10)
+project(splay_tree)
 
-set(graphs_dir ${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${graphs_dir}/preorder_traversal)
+add_library(splay_tree STATIC)
 
-file(GLOB_RECURSE SRC_FILES src/*.cpp)
-add_executable(splay_tree ${SRC_FILES})
-set_target_properties(
-	splay_tree PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+# no need to add headers here, only sources are required
+target_sources(splay_tree
+    PRIVATE
+        src/splay_tree.cpp
 )
-# target_link_libraries(splay_tree PRIVATE cachelet)
-target_include_directories(splay_tree PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# configure_file(${CNF}/auto_conf.hpp.in auto_conf.hpp @ONLY)
-target_include_directories(splay_tree PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(splay_tree INTERFACE preorder_traversal)
+
+target_include_directories(splay_tree
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+set(public_headers
+    include/*.h
+)
+# note that ${public_headers} has to be in quotes
+
+set(graph_dir ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(splay_tree PRIVATE ${graph_dir}/preorder_traversal)
+
+set_target_properties(splay_tree PROPERTIES PUBLIC_HEADER "${public_headers}")
