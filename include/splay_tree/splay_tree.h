@@ -5,7 +5,8 @@
 namespace splay_ {
 
 enum status {OK = 0,
-             WARN = 1};
+             WARN = 1,
+             SAME_NODES = 2};
 
 enum sides { left, right, no };
 
@@ -15,7 +16,7 @@ public:
 
     splay_tree();
     value_t search(tag_t);
-    status insert(tag_t, value_t);
+    status insert(tag_t, value_t&);
     status remove(tag_t);
     status print();
 
@@ -34,11 +35,15 @@ public:
 private:
 
     std::unordered_map<tag_t, node*> nodes;
+    std::unordered_map<tag_t, value_t*> data;
+    int (*cmp)(tag_t, tag_t);
     int depth;
     int get_depth();
     status rotate(tag_t, sides);
     status right_rotate(tag_t);
     status left_rotate(tag_t);
+    status simple_tree_insert(node*, node*);
+    tag_t find_closest_tag(tag_t, node*);
 
     status zig_zag(tag_t tag) {
         tag_t parent_tag =  nodes[tag]->parent->tag;
