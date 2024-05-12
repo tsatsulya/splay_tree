@@ -10,12 +10,28 @@ enum status {OK = 0,
              SAME_NODES = 2};
 
 enum sides { left, right, no };
-enum desired { minimum, maximum, no };
+enum desired { minimum, maximum, nn };
 
 
 template<typename tag_t, typename value_t>
 class splay_tree {
 public:
+
+    struct node {
+        tag_t tag;
+        node* right = nullptr;
+        node* left = nullptr;
+        node* parent = nullptr;
+        node(tag_t tag_) {
+            this->tag = tag_;
+        }
+        node(node *another) {
+            this->tag = another->tag;
+            this->right = another->right;
+            this->left = another->left;
+            this->parent = another->parent;
+        }
+    };
 
     splay_tree(int (*user_cmp_)(tag_t, tag_t)){
         cmp = user_cmp_;
@@ -35,18 +51,10 @@ public:
     value_t search(tag_t);
     status insert(tag_t, value_t);
     status top_down_delete(tag_t);
-    status remove(tag_t);
+    status bottom_up_delete(tag_t);
     status print();
 
-    struct node {
-        tag_t tag;
-        node* right = nullptr;
-        node* left = nullptr;
-        node* parent = nullptr;
-        node(tag_t tag_) {
-            this->tag = tag_;
-        }
-    };
+
     node *create_node(tag_t tag) {
         return new node(tag);
     }
@@ -57,17 +65,24 @@ private:
     int (*cmp)(tag_t, tag_t);
     int depth;
     int get_depth();
-    status search_by_tag_recursively(tag_t picked,
-        node* subtree_root = root, desired purpose = desired::no);
+    node *root;
 
-    tag_t search_for_extremum(tag_t sub_root = root->tag, desired desire);
-    tag_t search_for_maximum(tag_t sub_root = root->tag);
-    tag_t search_for_minimum(tag_t sub_root = root->tag);
+    bool is_leaf(tag_t tag) {
+        return (!nodes[tag]->left && !nodes[tag]->right);
+    }
+
+    tag_t search_for_extremum(tag_t sub_root, desired desire);
+    tag_t search_for_maximum(tag_t sub_root);
+    tag_t search_for_minimum(tag_t sub_root);
 
     status rotate(tag_t, sides);
     status right_rotate(tag_t);
     status left_rotate(tag_t);
+
     status simple_tree_insert(node*, node*);
+    node *delete_leaf(tag_t);
+    void swap_nodes(node*, node*);
+
     tag_t find_closest_tag(tag_t, node*);
 
     status zig_zag(tag_t tag) {
@@ -100,7 +115,6 @@ private:
         return left_rotate(parent_tag);
     };
 
-    node *root;
 
     node *get_sub_node(node* root, sides side) {
         if (side == sides::left) return root->left;
@@ -288,29 +302,24 @@ alg::status alg::splay_tree<tag_t, value_t>::insert(tag_t new_tag, value_t new_d
 }
 
 template<typename tag_t, typename value_t>
-alg::status alg::splay_tree<tag_t, value_t>::search_by_tag_recursively(tag_t picked,
-    node *subtree_root = root, alg::desired purpose = alg::desired::no) {
+tag_t alg::splay_tree<tag_t, value_t>::search_for_extremum(tag_t sub_root,
+    alg::desired desire) {
 
-}
-
-template<typename tag_t, typename value_t>
-tag_t alg::splay_tree<tag_t, value_t>::search_for_extremum(
-    tag_t sub_root = root->tag, alg::desired desire) {
-
-    node* sub_child = (desire == alg::desired::maximum) ? sub_root->right : sub_root->left;
+    node* sub_child; tag_t child_tag;
     while (sub_child != nullptr) {
         sub_child = (desire == alg::desired::maximum) ? sub_child->right : sub_child->left;
+        if (sub_child) child_tag = sub_child->tag;
     }
-    return sub_child->tag;
+    return child_tag;
 }
 
 template<typename tag_t, typename value_t>
-tag_t alg::splay_tree<tag_t, value_t>::search_for_maximum(tag_t sub_root = root->tag) {
+tag_t alg::splay_tree<tag_t, value_t>::search_for_maximum(tag_t sub_root) {
     return search_for_extremum(sub_root, alg::desired::maximum);
 }
 
 template<typename tag_t, typename value_t>
-tag_t alg::splay_tree<tag_t, value_t>::search_for_minimum(tag_t sub_root = root->tag) {
+tag_t alg::splay_tree<tag_t, value_t>::search_for_minimum(tag_t sub_root) {
     return search_for_extremum(sub_root, alg::desired::minimum);
 }
 
@@ -318,17 +327,65 @@ template<typename tag_t, typename value_t>
 alg::status alg::splay_tree<tag_t, value_t>::top_down_delete(tag_t picked) {
     splay(picked);
     node* left_root = root->left;
-    node* left_root = root->left;
+    splay_tree *left_tree = new splay_tree(cmp, nodes, left_root->tag);
 
-    splay_tree *left_tree = new splay_tree(cmp, nodes, left_root);
-
-    tag_t left_max = left_tree->search_for_maximum();
+    tag_t left_max = left_tree->search_for_maximum(root->tag);
     left_tree->splay(left_max);
     left_tree->tie_node(left_tree->root, left_tree->nodes[left_max], alg::sides::right);
     left_tree->nodes.erase(picked);
     nodes = left_tree->nodes;
 
     delete left_tree;
+    return alg::status::OK;
 }
 
+template<typename tag_t, typename value_t>
+alg::splay_tree<tag_t, value_t>::node *alg::splay_tree<tag_t, value_t>::delete_leaf(tag_t leaf) {
+    node *parent = nodes[leaf]->parent;
+    if (!parent) {
+        root = nullptr;
+    }
+    else {
+        alg::sides side = get_node_side(leaf);
+        if (side == alg::sides::left) parent->left = nullptr;
+        else parent->right = nullptr;
+    }
+    nodes.erase(leaf);
+    return parent;
+}
+
+template<typename tag_t, typename value_t>
+void alg::splay_tree<tag_t, value_t>::swap_nodes(
+    alg::splay_tree<tag_t, value_t>::node *first,
+    alg::splay_tree<tag_t, value_t>::node *second) {
+
+    node *tmp = new node(first);
+    first->parent = second->parent;
+    first->right = second->right;
+    first->left = second->left;
+    second->parent = tmp->parent;
+    second->right = tmp->right;
+    second->left = tmp->left;
+    delete tmp;
+}
+
+template<typename tag_t, typename value_t>
+alg::status alg::splay_tree<tag_t, value_t>::bottom_up_delete(tag_t picked) {
+    node *parent;
+    if (is_leaf(picked)) {
+        parent = delete_leaf(picked);
+    }
+    else {
+        if (nodes[picked]->right) {
+            parent = nodes[picked];
+            tag_t right_minimum = search_for_minimum(nodes[picked]->right->tag);
+            swap_nodes(nodes[picked], nodes[right_minimum]);
+            delete_leaf(picked);
+        }
+    }
+
+    if (parent) splay(parent->tag);
+
+    return alg::status::OK;
+}
 }
