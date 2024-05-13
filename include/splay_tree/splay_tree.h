@@ -128,7 +128,6 @@ private:
     };
 
     sides get_node_side(node *picked_node) {
-        std::cout << "\nget_node_side : " << picked_node->tag << std::endl;
         node *parent = picked_node->parent;
 
         if (!parent)
@@ -171,7 +170,6 @@ status splay_tree<tag_t, value_t>::tie_node(node* x, node* y, sides side) { // x
 
 template<typename tag_t, typename value_t>
 status splay_tree<tag_t, value_t>::rotate(tag_t tag, sides direction) {
-    std::cout << "\nrotate : " << ((direction == sides::left) ? "left, tag = " : "right, tag = ") << tag << std::endl;
     node *root_node = nodes[tag];
     node *parent = root_node->parent;
 
@@ -190,9 +188,7 @@ status splay_tree<tag_t, value_t>::rotate(tag_t tag, sides direction) {
     }
     tie_node(root_node, sub_node, opp_side(direction));
     tie_node(x, root_node, same_side(direction));
-    // if (sub_node)
-        // tie_node(root_node, sub_node, opp_side(direction));
-    if (nodes[tag]->right) std::cout << "\n RIGHT_NODE OF " << tag << "IS " << nodes[tag]->right->tag;
+
     return status::OK;
 }
 
@@ -208,7 +204,6 @@ status splay_tree<tag_t, value_t>::left_rotate(tag_t tag) {
 
 template<typename tag_t, typename value_t>
 status splay_tree<tag_t, value_t>::splay(tag_t tag) {
-    std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     node *picked_node = nodes[tag];
     while (root != picked_node) {
@@ -220,40 +215,30 @@ status splay_tree<tag_t, value_t>::splay(tag_t tag) {
         node *grparent = nodes[tag]->parent->parent;
 
         if (!grparent) {
-            if (parent_side == sides::left) {
+            if (parent_side == sides::left)
                 right_rotate(parent->tag);
-            }
-            else {
+            else
                 left_rotate(parent->tag);
-                std::cout << 9;
-            }
             return status::OK;
         }
         sides grparent_side = get_node_side(parent);
-        if (grparent_side == sides::left && parent_side == sides::right) {
-            std::cout << 555;
+        if (grparent_side == sides::left && parent_side == sides::right)
             zag_zig(tag);
 
-        }
-        if (grparent_side == sides::right && parent_side == sides::left) {
-            std::cout << 444;
+        if (grparent_side == sides::right && parent_side == sides::left)
             zag_zig(tag);
-        }
-        if (grparent_side == sides::right && parent_side == sides::right) {
-            std::cout << 777;
+
+        if (grparent_side == sides::right && parent_side == sides::right)
             zag_zag(tag);
-        }
-        if (grparent_side == sides::left && parent_side == sides::left) {
-            std::cout << 888;
+
+        if (grparent_side == sides::left && parent_side == sides::left)
             zig_zig(tag);
-        }
     }
     return status::OK;
 }
 
 template<typename tag_t, typename value_t>
 status splay_tree<tag_t, value_t>::simple_tree_insert(node *tie_to, node *tie) {
-    std::cout << "\nsimple insert: " << tie_to->tag << tie->tag;
     int cmp_result = cmp(tie_to->tag, tie->tag);
     if (!cmp_result) return status::SAME_NODES;
 
@@ -264,7 +249,6 @@ status splay_tree<tag_t, value_t>::simple_tree_insert(node *tie_to, node *tie) {
         return tie_node(tie_to, tie, side);
     else {
         tie_node(tie_to, tie, side);
-        std::cout << 65656566565 << tie_to->right->tag;
 
         int child_cmp_result = cmp(previous_child->tag, tie->tag);
 
@@ -300,7 +284,6 @@ tag_t splay_tree<tag_t, value_t>::find_closest_tag(tag_t req_tag, node *picked_n
 
 template<typename tag_t, typename value_t>
 status splay_tree<tag_t, value_t>::insert(tag_t new_tag, value_t new_data) {
-    std::cout << "\ninsert: " << new_tag << std::endl;
     node *new_node = new node(new_tag);
     data[new_tag] = &new_data;
     nodes[new_tag] = new_node;
@@ -312,12 +295,10 @@ status splay_tree<tag_t, value_t>::insert(tag_t new_tag, value_t new_data) {
     if (root->tag == new_tag) return status::OK;
 
     tag_t closest_tag = find_closest_tag(new_tag, root);
-    std::cout << closest_tag;
     if (closest_tag != new_tag)
         simple_tree_insert(nodes[closest_tag], nodes[new_tag]);
 
     splay(new_tag);
-    std::cout << "\nroot: " << root->tag << std::endl;
     return status::OK;
 }
 
@@ -367,10 +348,8 @@ status splay_tree<tag_t, value_t>::top_down_delete(tag_t picked) {
 
 template<typename tag_t, typename value_t>
 tag_t splay_tree<tag_t, value_t>::delete_leaf(tag_t leaf) {
-    std::cout << "DELETE" << leaf << std::endl;
     node *parent = nodes[leaf]->parent;
     if (!parent) {
-        // std::cout << 1010010011;
         root = nullptr;
     }
     else {
@@ -379,7 +358,6 @@ tag_t splay_tree<tag_t, value_t>::delete_leaf(tag_t leaf) {
         else parent->right = nullptr;
     }
     nodes.erase(leaf);
-    std::cout << "DELETE" << parent->tag << std::endl;
 
     return parent->tag;
 }
@@ -390,7 +368,6 @@ void splay_tree<tag_t, value_t>::swap_nodes(
     splay_tree<tag_t, value_t>::node *second) {
 
     sides side;
-    std::cout << "\nswapswap " << first->tag << second->tag;
     if (first->left) first->left->parent = second;
     if (first->right) first->right->parent = second;
 
@@ -429,7 +406,6 @@ void splay_tree<tag_t, value_t>::swap_nodes(
 template<typename tag_t, typename value_t>
 status splay_tree<tag_t, value_t>::bottom_up_delete(tag_t picked) {
     node *parent;
-    std::cout << "maxmax" << picked << std::endl;
     if (is_leaf(picked)) {
         parent = nodes[delete_leaf(picked)];
     }
@@ -440,19 +416,17 @@ status splay_tree<tag_t, value_t>::bottom_up_delete(tag_t picked) {
             tag_t right_minimum = search_for_minimum(nodes[picked]->right->tag);
 
             swap_nodes(nodes[picked], nodes[right_minimum]);
-            delete_leaf(picked);
+            // delete_leaf(picked);
         }
         else if (nodes[picked]->left) {
-            std::cout << 9999999;
             tag_t left_maximum = search_for_maximum(nodes[picked]->left->tag);
-            std::cout << "\n" << left_maximum << 7777080808080808;
             swap_nodes(nodes[picked], nodes[left_maximum]);
             std::vector<int> p_t = get_in_preorder_traversal();
-            delete_leaf(picked);
+            // delete_leaf(picked);
         }
-    }
-    std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAA";
+            delete_leaf(picked);
 
+    }
     if (parent) splay(parent->tag);
     // else
 
@@ -466,7 +440,7 @@ splay_tree<tag_t, value_t>* splay_tree<tag_t, value_t>::join(splay_tree *other) 
     tag_t min_this = search_for_minimum(root->tag);
     tag_t min_other = search_for_minimum(other->root->tag);
     tag_t new_root;
-    std::cout << max_this << min_this << max_other << min_other << std::endl;
+
     if (cmp(max_this, min_other) < 0) {
         splay(max_this);
         tie_node(root, other->root, sides::right);
@@ -505,7 +479,6 @@ status splay_tree<tag_t, value_t>::split(tag_t tag, splay_tree *new_left, splay_
 template<typename tag_t, typename value_t>
 std::vector<tag_t> splay_tree<tag_t, value_t>::get_in_preorder_traversal() {
     graph_format::tree<tag_t> *format_tree = new graph_format::tree<tag_t>;
-    std::cout << "6666" << std::endl;
     for (auto& n : nodes)
         format_tree->nodes[n.first] = graph_format::node(n.first);
     for (auto& n : nodes) {
